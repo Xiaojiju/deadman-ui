@@ -1,0 +1,32 @@
+{
+  "LoginPage": {
+    "welcome": "欢迎来到 Acme 公司",
+    "noAccount": "还没有账户？",
+    "signUp": "注册",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "m@example.com",
+    "loginButton": "登录",
+    "orSeparator": "或",
+    "and": "和",
+    "continueWithApple": "使用 Apple 继续",
+    "continueWithGoogle": "使用 Google 继续",
+    "loginWithAppleNotSupportedYet": "暂不支持使用 Apple 登录。",
+    "loginWithGoogleNotSupportedYet": "暂不支持使用 Google 登录。",
+    "termsAgreement": "点击继续，即表示您同意我们的服务条款和隐私政策。",
+    "termsOfService": "服务条款",
+    "privacyPolicy": "隐私政策",
+    "errors": {
+      "emailRequired": "邮箱是必填项",
+      "emailTooLong": "邮箱过长",
+      "platformNotSupported": "暂不支持使用 {event} 登录。"
+    },
+    "success": {
+      "loginSuccessful": "登录成功！",
+      "redirectMessage": "{email} 将被重定向到首页。"
+    },
+    "form": {
+      "emailRequired": "邮箱是必填项",
+      "emailTooLong": "邮箱过长"
+    }
+  }
+}

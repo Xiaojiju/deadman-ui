@@ -1,0 +1,32 @@
+{
+  "LoginPage": {
+    "welcome": "Welcome to Acme Inc.",
+    "loginWithAppleNotSupportedYet": "Login with Apple is not supported yet.",
+    "loginWithGoogleNotSupportedYet": "Login with Google is not supported yet.",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "emailLabel": "Email",
+    "emailPlaceholder": "m@example.com",
+    "loginButton": "Login",
+    "orSeparator": "or",
+    "and": "and",
+    "continueWithApple": "Continue with Apple",
+    "continueWithGoogle": "Continue with Google",
+    "termsAgreement": "By clicking continue, you agree to our Terms of Service and Privacy Policy.",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "errors": {
+      "emailRequired": "Email is required",
+      "emailTooLong": "Email is too long",
+      "platformNotSupported": "Login with {event} is not supported yet."
+    },
+    "success": {
+      "loginSuccessful": "Login successful!",
+      "redirectMessage": "{email} will be redirected to the home page."
+    },
+    "form": {
+      "emailRequired": "Email is required",
+      "emailTooLong": "Email is too long"
+    }
+  }
+}
