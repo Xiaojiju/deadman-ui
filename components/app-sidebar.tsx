@@ -15,63 +15,123 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import {
+  CameraIcon,
+  FileTextIcon,
+  Settings2Icon,
+  CircleHelpIcon,
+  SearchIcon,
+  DatabaseIcon,
+  FileChartColumnIcon,
+  FileIcon,
+  CommandIcon,
+  Settings2,
+  BookOpen,
+  Bot,
+  SquareTerminal,
+} from "lucide-react"
+import { NavChildren, NavMainGroup } from "@/service/system/type"
+import { SystemService } from "@/service/system"
 
 const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar:
+      "https://q6.itc.cn/q_70/images03/20250306/355fba6a5cb049f5b98c2ed9f03cc5e1.jpeg",
   },
   navMain: [
     {
-      title: "Dashboard",
+      title: "Playground",
       url: "#",
-      icon: (
-        <LayoutDashboardIcon
-        />
-      ),
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "History",
+          url: "#",
+          isActive: true,
+        },
+        {
+          title: "Starred",
+          url: "#",
+        },
+        {
+          title: "Settings",
+          url: "#",
+        },
+      ],
     },
     {
-      title: "Lifecycle",
+      title: "Models",
       url: "#",
-      icon: (
-        <ListIcon
-        />
-      ),
+      icon: Bot,
+      items: [
+        {
+          title: "Genesis",
+          url: "#",
+        },
+        {
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
+          url: "#",
+        },
+      ],
     },
     {
-      title: "Analytics",
+      title: "Documentation",
       url: "#",
-      icon: (
-        <ChartBarIcon
-        />
-      ),
+      icon: BookOpen,
+      items: [
+        {
+          title: "Introduction",
+          url: "#",
+        },
+        {
+          title: "Get Started",
+          url: "#",
+        },
+        {
+          title: "Tutorials",
+          url: "#",
+        },
+        {
+          title: "Changelog",
+          url: "#",
+        },
+      ],
     },
     {
-      title: "Projects",
+      title: "Settings",
       url: "#",
-      icon: (
-        <FolderIcon
-        />
-      ),
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: (
-        <UsersIcon
-        />
-      ),
+      icon: Settings2,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
     },
   ],
   navClouds: [
     {
       title: "Capture",
-      icon: (
-        <CameraIcon
-        />
-      ),
+      icon: <CameraIcon />,
       isActive: true,
       url: "#",
       items: [
@@ -87,10 +147,7 @@ const data = {
     },
     {
       title: "Proposal",
-      icon: (
-        <FileTextIcon
-        />
-      ),
+      icon: <FileTextIcon />,
       url: "#",
       items: [
         {
@@ -105,10 +162,7 @@ const data = {
     },
     {
       title: "Prompts",
-      icon: (
-        <FileTextIcon
-        />
-      ),
+      icon: <FileTextIcon />,
       url: "#",
       items: [
         {
@@ -126,57 +180,68 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: (
-        <Settings2Icon
-        />
-      ),
+      icon: <Settings2Icon />,
     },
     {
       title: "Get Help",
       url: "#",
-      icon: (
-        <CircleHelpIcon
-        />
-      ),
+      icon: <CircleHelpIcon />,
     },
     {
       title: "Search",
       url: "#",
-      icon: (
-        <SearchIcon
-        />
-      ),
+      icon: <SearchIcon />,
     },
   ],
   documents: [
     {
       name: "Data Library",
       url: "#",
-      icon: (
-        <DatabaseIcon
-        />
-      ),
+      icon: <DatabaseIcon />,
     },
     {
       name: "Reports",
       url: "#",
-      icon: (
-        <FileChartColumnIcon
-        />
-      ),
+      icon: <FileChartColumnIcon />,
     },
     {
       name: "Word Assistant",
       url: "#",
-      icon: (
-        <FileIcon
-        />
-      ),
+      icon: <FileIcon />,
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [navActive, setNavActive] = React.useState<string>()
+  const [navMainData, setNavMainData] =
+    React.useState<NavMainGroup<NavChildren>>()
+
+  React.useEffect(() => {
+    const fetchNavData = async () => {
+      const navItems = await SystemService.getNavMainData()
+      // 这里可以处理获取到的导航数据
+      console.log(navItems)
+      setNavMainData(navItems)
+    }
+    fetchNavData()
+  }, [])
+
+  React.useEffect(() => {
+    console.log(navActive)
+    if (navActive) {
+      setNavMainData(
+        navMainData?.map((item) => ({
+          ...item,
+          items: item.items?.map((subItem) => ({
+            ...subItem,
+            isActive: subItem.key === navActive,
+          })),
+        }))
+      )
+    }
+  }, [navActive])
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -195,7 +260,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain
+          items={navMainData || []}
+          actions={{
+            onClick: setNavActive,
+          }}
+        />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

@@ -1,4 +1,19 @@
 {
+  "Theme": {
+    "dark": "Dark Mode",
+    "light": "Light Mode",
+    "system": "System Mode",
+    "theme": "Theme",
+    "toggleTheme": "Toggle Theme",
+    "blue": "Blue",
+    "green": "Green",
+    "neutral": "Neutral",
+    "orange": "Orange",
+    "red": "Red",
+    "rose": "Rose",
+    "violet": "Violet",
+    "yellow": "Yellow"
+  },
   "LoginPage": {
     "welcome": "Welcome to Acme Inc.",
     "loginWithAppleNotSupportedYet": "Login with Apple is not supported yet.",

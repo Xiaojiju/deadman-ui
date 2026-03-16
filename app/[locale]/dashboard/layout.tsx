@@ -1,12 +1,18 @@
+"use client"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { usePathname } from "next/navigation"
 
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const pathname = usePathname()
+  console.log(pathname)
+
   return (
     <SidebarProvider
       style={

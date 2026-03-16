@@ -1,4 +1,19 @@
 {
+  "Theme": {
+    "dark": "暗黑模式",
+    "light": "亮色模式",
+    "system": "系统模式",
+    "theme": "主题",
+    "toggleTheme": "切换主题",
+    "blue": "蓝色",
+    "green": "绿色",
+    "neutral": "中性",
+    "orange": "橙色",
+    "red": "红色",
+    "rose": "玫瑰",
+    "violet": "紫色",
+    "yellow": "黄色"
+  },
   "LoginPage": {
     "welcome": "欢迎来到 Acme 公司",
     "noAccount": "还没有账户？",
