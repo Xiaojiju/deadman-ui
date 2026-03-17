@@ -228,7 +228,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [])
 
   React.useEffect(() => {
-    console.log(navActive)
     if (navActive) {
       setNavMainData(
         navMainData?.map((item) => ({
@@ -243,7 +242,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [navActive])
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar
+      collapsible="offcanvas"
+      {...props}
+      className="bg-[--color-sidebar-bg]"
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

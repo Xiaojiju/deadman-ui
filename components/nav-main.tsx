@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { NavChildren, NavMainGroup } from "@/service/system/type"
+import { useColorTheme } from "@/hooks/use-color"
 
 export interface NavMainProps {
   items: NavMainGroup<NavChildren>
@@ -28,6 +29,8 @@ export interface NavMainProps {
 }
 
 export function NavMain({ items, actions }: NavMainProps) {
+  const { colorTheme } = useColorTheme()
+  console.log(colorTheme)
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -57,15 +60,20 @@ export function NavMain({ items, actions }: NavMainProps) {
                           actions?.onClick?.(subItem.key || subItem.title)
                         }}
                       >
-                        <a
-                          href={subItem.url}
-                          className={cn(
-                            "flex items-center gap-2",
-                            subItem.isActive && "hover:bg-primary/80"
-                          )}
-                        >
-                          <span>{subItem.title}</span>
-                        </a>
+                        <div className="flex items-center justify-between">
+                          <a
+                            href={subItem.url}
+                            className={"flex items-center gap-2"}
+                          >
+                            <span>{subItem.title}</span>
+                          </a>
+                          <div
+                            className={cn(
+                              subItem.isActive &&
+                                `h-2 w-2 rounded-full bg-${colorTheme}-500 border border-border`
+                            )}
+                          />
+                        </div>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}

@@ -5,7 +5,11 @@ import {
   LoginFormFields,
   PlatformEvent,
 } from "@/components/login-form"
-import { ModeToggle, LanguageToggle } from "@/components/mode-toggle"
+import {
+  ModeToggle,
+  LanguageToggle,
+  ColorThemeToggle,
+} from "@/components/mode-toggle"
 import { useRouter } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -44,6 +48,7 @@ export default function LoginPage() {
         <div className="flex gap-4">
           <ModeToggle />
           <LanguageToggle />
+          <ColorThemeToggle />
         </div>
       </div>
       <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
