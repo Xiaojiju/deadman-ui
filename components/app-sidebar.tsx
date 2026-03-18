@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
@@ -40,94 +41,6 @@ const data = {
     avatar:
       "https://q6.itc.cn/q_70/images03/20250306/355fba6a5cb049f5b98c2ed9f03cc5e1.jpeg",
   },
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-          isActive: true,
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
   navClouds: [
     {
       title: "Capture",
@@ -179,7 +92,7 @@ const data = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: <Settings2Icon />,
     },
     {
@@ -213,6 +126,7 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
   const [navActive, setNavActive] = React.useState<string>()
   const [navMainData, setNavMainData] =
     React.useState<NavMainGroup<NavChildren>>()
@@ -221,22 +135,52 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const fetchNavData = async () => {
       const navItems = await SystemService.getNavMainData()
       // 这里可以处理获取到的导航数据
-      console.log(navItems)
       setNavMainData(navItems)
     }
     fetchNavData()
   }, [])
 
+  // 监听路由变化更新 navActive
+  React.useEffect(() => {
+    if (navMainData) {
+      for (const group of navMainData) {
+        // 检查父级项
+        if (group.url === pathname) {
+          const newActive = group.key || group.title
+          if (newActive !== navActive) {
+            setNavActive(newActive)
+          }
+          return
+        }
+        // 检查子项
+        const matchingItem = group.items?.find((item) => item.url === pathname)
+        if (matchingItem) {
+          const newActive = matchingItem.key || matchingItem.title
+          if (newActive !== navActive) {
+            setNavActive(newActive)
+          }
+          return
+        }
+      }
+    }
+  }, [pathname, navMainData, navActive])
+
   React.useEffect(() => {
     if (navActive) {
-      setNavMainData(
-        navMainData?.map((item) => ({
-          ...item,
-          items: item.items?.map((subItem) => ({
+      setNavMainData((prev) =>
+        prev?.map((item) => {
+          const isParentActive = (item.key || item.title) === navActive
+          const updatedItems = item.items?.map((subItem) => ({
             ...subItem,
-            isActive: subItem.key === navActive,
-          })),
-        }))
+            isActive: (subItem.key || subItem.title) === navActive,
+          }))
+          const isAnyChildActive = updatedItems?.some((subItem) => subItem.isActive)
+          return {
+            ...item,
+            items: updatedItems,
+            isActive: isParentActive || isAnyChildActive,
+          }
+        })
       )
     }
   }, [navActive])

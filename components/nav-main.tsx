@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 import {
   Collapsible,
@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { NavChildren, NavMainGroup } from "@/service/system/type"
-import { useColorTheme } from "@/hooks/use-color"
+
+import Link from "next/link"
 
 export interface NavMainProps {
   items: NavMainGroup<NavChildren>
@@ -29,8 +30,6 @@ export interface NavMainProps {
 }
 
 export function NavMain({ items, actions }: NavMainProps) {
-  const { colorTheme } = useColorTheme()
-  console.log(colorTheme)
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -44,41 +43,54 @@ export function NavMain({ items, actions }: NavMainProps) {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  asChild
+                  isActive={item.isActive}
+                >
+                  <Link
+                    href={item.url || "#"}
+                    onClick={() => {
+                      actions?.onClick?.(item.key || item.title)
+                    }}
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    {item.items && item.items.length > 0 && (
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    )}
+                  </Link>
                 </SidebarMenuButton>
               </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton
-                        asChild
-                        onClick={() => {
-                          actions?.onClick?.(subItem.key || subItem.title)
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <a
+              {item.items && item.items.length > 0 && (
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          onClick={() => {
+                            actions?.onClick?.(subItem.key || subItem.title)
+                          }}
+                        >
+                          <Link
                             href={subItem.url}
-                            className={"flex items-center gap-2"}
+                            className="flex items-center justify-between"
                           >
                             <span>{subItem.title}</span>
-                          </a>
-                          <div
-                            className={cn(
-                              subItem.isActive &&
-                                `h-2 w-2 rounded-full bg-${colorTheme}-500 border border-border`
-                            )}
-                          />
-                        </div>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
+                            <div
+                              className={cn(
+                                "h-2 w-2 rounded-full border border-border",
+                                subItem.isActive ? "bg-primary" : "hidden"
+                              )}
+                            />
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              )}
             </SidebarMenuItem>
           </Collapsible>
         ))}
