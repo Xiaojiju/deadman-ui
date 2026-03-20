@@ -26,10 +26,6 @@ import {
   FileChartColumnIcon,
   FileIcon,
   CommandIcon,
-  Settings2,
-  BookOpen,
-  Bot,
-  SquareTerminal,
 } from "lucide-react"
 import { NavChildren, NavMainGroup } from "@/service/system/type"
 import { SystemService } from "@/service/system"
@@ -174,7 +170,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ...subItem,
             isActive: (subItem.key || subItem.title) === navActive,
           }))
-          const isAnyChildActive = updatedItems?.some((subItem) => subItem.isActive)
+          const isAnyChildActive = updatedItems?.some(
+            (subItem) => subItem.isActive
+          )
           return {
             ...item,
             items: updatedItems,
@@ -186,11 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [navActive])
 
   return (
-    <Sidebar
-      collapsible="offcanvas"
-      {...props}
-      className="bg-[--color-sidebar-bg]"
-    >
+    <Sidebar collapsible="icon" {...props} className="bg-[--color-sidebar-bg]">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
