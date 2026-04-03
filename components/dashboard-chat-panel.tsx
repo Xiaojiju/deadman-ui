@@ -8,6 +8,8 @@ import {
   Paperclip,
   Sparkles,
 } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -29,7 +31,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
-import { callLlmChat, getLlmModels } from "@/app/client/api"
+import { callLlmChat, callLlmChatStream, getLlmModels } from "@/app/client/api"
 import { LlmChatRequest, LlmModel } from "@/app/typing"
 
 type ChatRole = "user" | "assistant"
@@ -93,6 +95,7 @@ export function DashboardChatPanel({
   const tDefault = useTranslations("Default")
   const [models, setModels] = React.useState<LlmModel[]>([])
   const [selectedModel, setSelectedModel] = React.useState<string>("")
+  const [streamMode, setStreamMode] = React.useState<boolean>(true)
   const [sessions, setSessions] = React.useState<ChatSession[]>(initialSessions)
   const [activeSessionId, setActiveSessionId] = React.useState(
     initialSessions[0]!.id
@@ -158,43 +161,75 @@ export function DashboardChatPanel({
   const send = React.useCallback(async () => {
     const text = draft.trim()
     if (!text) return
+
+    const model = selectedModel || models[0]?.model
+    if (!model) return
+
     const userMsg: ChatMessage = {
       id: newId(),
       role: "user",
       content: text,
     }
+
     // 1. 先乐观更新本地消息
     setMessagesBySession((prev) => ({
       ...prev,
       [activeSessionId]: [...(prev[activeSessionId] ?? []), userMsg],
     }))
     setDraft("")
+
+    const baseReq: LlmChatRequest = {
+      model,
+      messages: [{ role: "user", content: text }],
+    }
+
     // 2. 调用服务端 LLM API
     try {
-      const req: LlmChatRequest = {
-        model: "kimi-k2.5", // 或从设置里拿
-        messages: [
-          // 这里简单起见只发当前 user 消息，后面你可以带上历史
-          { role: "user", content: text },
-        ],
-        stream: false,
+      if (!streamMode) {
+        const resp = await callLlmChat({ ...baseReq, stream: false })
+        const assistantMsg: ChatMessage = {
+          id: newId(),
+          role: "assistant",
+          content:
+            typeof resp.message.content === "string"
+              ? resp.message.content
+              : "",
+        }
+        setMessagesBySession((prev) => ({
+          ...prev,
+          [activeSessionId]: [...(prev[activeSessionId] ?? []), assistantMsg],
+        }))
+      } else {
+        const assistantId = newId()
+        // 先插入一个空的 assistant 消息，占位用于流式更新
+        setMessagesBySession((prev) => ({
+          ...prev,
+          [activeSessionId]: [
+            ...(prev[activeSessionId] ?? []),
+            {
+              id: assistantId,
+              role: "assistant",
+              content: "",
+            },
+          ],
+        }))
+
+        await callLlmChatStream({ ...baseReq, stream: true }, (chunk) => {
+          setMessagesBySession((prev) => {
+            const current = prev[activeSessionId] ?? []
+            return {
+              ...prev,
+              [activeSessionId]: current.map((m) =>
+                m.id === assistantId ? { ...m, content: m.content + chunk } : m
+              ),
+            }
+          })
+        })
       }
-      const resp = await callLlmChat(req)
-      const assistantMsg: ChatMessage = {
-        id: newId(),
-        role: "assistant",
-        content:
-          typeof resp.message.content === "string" ? resp.message.content : "",
-      }
-      setMessagesBySession((prev) => ({
-        ...prev,
-        [activeSessionId]: [...(prev[activeSessionId] ?? []), assistantMsg],
-      }))
     } catch (e) {
-      // 你可以在这里加一条 error 消息或 toast
       console.error(e)
     }
-  }, [draft, activeSessionId])
+  }, [draft, activeSessionId, models, selectedModel, streamMode])
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -294,13 +329,30 @@ export function DashboardChatPanel({
                   : "bg-muted text-foreground"
               )}
             >
-              {m.content}
+              <ChatMessageContent content={m.content} />
             </div>
           </div>
         ))}
       </div>
 
       <div className="shrink-0 border-t p-3">
+        <div className="mb-2 flex flex-wrap items-center gap-1">
+          <span className="me-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+            {t("tools")}
+          </span>
+          <ToolbarIconButton label={t("attachFile")} icon={Paperclip} />
+          {/* 预留：网页搜索 / 图片 / 语音等工具 */}
+          <span className="mx-1 h-3 w-px bg-border" />
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => setStreamMode((v) => !v)}
+          >
+            {streamMode ? "Stream" : "Complete"}
+          </Button>
+        </div>
         <div className="flex flex-col gap-2">
           <Textarea
             value={draft}
@@ -355,6 +407,36 @@ function ToolbarIconButton({
       </TooltipTrigger>
       <TooltipContent side="top">{label}</TooltipContent>
     </Tooltip>
+  )
+}
+
+function ChatMessageContent({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+        ul: ({ children }) => (
+          <ul className="mb-1.5 ml-4 list-disc space-y-0.5">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="mb-1.5 ml-4 list-decimal space-y-0.5">{children}</ol>
+        ),
+        li: ({ children }) => <li>{children}</li>,
+        code: ({ inline, children }) =>
+          inline ? (
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.8em]">
+              {children}
+            </code>
+          ) : (
+            <code className="block rounded-md bg-background/90 p-2 font-mono text-xs whitespace-pre-wrap shadow-inner ring-1 ring-border">
+              {children}
+            </code>
+          ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
   )
 }
 
