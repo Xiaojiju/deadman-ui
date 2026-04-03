@@ -1,4 +1,8 @@
 {
+  "Default": {
+    "you": "You",
+    "me": "Me"
+  },
   "Theme": {
     "dark": "Dark Mode",
     "light": "Light Mode",
@@ -43,5 +47,25 @@
       "emailRequired": "Email is required",
       "emailTooLong": "Email is too long"
     }
+  },
+  "Chat": {
+    "newChat": "New Chat",
+    "send": "Send",
+    "enterToSend": "Enter to send",
+    "shiftEnterForNewLine": "Shift+Enter for new line",
+    "tools": "Tools",
+    "placeholders": "Placeholders",
+    "webSearch": "Web Search",
+    "attachFile": "Attach File",
+    "image": "Image",
+    "voice": "Voice",
+    "assistant": "Assistant",
+    "chatPanel": "Chat Panel",
+    "history": "History",
+    "conversations": "Conversations",
+    "chat": "Chat",
+    "placeholdersDescription": "Use “/” to trigger the corresponding behavior when you pick behaviors",
+    "enterToSendDescription": "Enter to send",
+    "shiftEnterForNewLineDescription": "Shift+Enter for new line"
   }
 }

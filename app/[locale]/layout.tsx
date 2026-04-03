@@ -17,7 +17,7 @@ const fontMono = Geist_Mono({
 
 export default async function RootLayout({
   children,
-  params
+  params,
 }: Readonly<{
   children: React.ReactNode
 }> & {
@@ -25,7 +25,7 @@ export default async function RootLayout({
 }) {
   const { locale } = await params
   if (!hasLocale(routing.locales, locale)) {
-    notFound();
+    notFound()
   }
 
   return (

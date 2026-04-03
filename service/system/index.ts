@@ -1,4 +1,4 @@
-import { BookOpen, Bot, Settings2, SquareTerminal } from "lucide-react"
+import { SquareTerminal } from "lucide-react"
 import { NavChildren, NavMainGroup } from "./type"
 
 const navMainData: NavMainGroup = [
@@ -25,7 +25,7 @@ const navMainData: NavMainGroup = [
         url: "/dashboard/settings",
       },
     ],
-  }
+  },
 ]
 
 /**

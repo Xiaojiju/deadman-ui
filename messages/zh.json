@@ -1,4 +1,8 @@
 {
+  "Default": {
+    "you": "你",
+    "me": "我"
+  },
   "Theme": {
     "dark": "暗黑模式",
     "light": "亮色模式",
@@ -43,5 +47,25 @@
       "emailRequired": "邮箱是必填项",
       "emailTooLong": "邮箱过长"
     }
+  },
+  "Chat": {
+    "newChat": "新会话",
+    "send": "发送",
+    "enterToSend": "按回车键发送",
+    "shiftEnterForNewLine": "Shift+Enter 换行",
+    "tools": "工具",
+    "placeholders": "占位符",
+    "webSearch": "网页搜索",
+    "image": "图片",
+    "voice": "语音",
+    "assistant": "助手",
+    "chatPanel": "聊天面板",
+    "history": "历史",
+    "conversations": "会话",
+    "chat": "聊天",
+    "placeholdersDescription": "当您选择行为时，使用“/”触发对应的行为",
+    "enterToSendDescription": "按回车键发送",
+    "shiftEnterForNewLineDescription": "Shift+Enter 换行",
+    "attachFile": "附件"
   }
 }

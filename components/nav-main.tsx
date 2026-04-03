@@ -75,15 +75,14 @@ export function NavMain({ items, actions }: NavMainProps) {
                         >
                           <Link
                             href={subItem.url}
-                            className="flex items-center justify-between"
+                            className={cn(
+                              "flex items-center justify-between rounded-md px-2 py-1.5 transition-colors",
+                              subItem.isActive
+                                ? "bg-secondary text-secondary-foreground"
+                                : "hover:bg-muted"
+                            )}
                           >
                             <span>{subItem.title}</span>
-                            <div
-                              className={cn(
-                                "h-2 w-2 rounded-full border border-border",
-                                subItem.isActive ? "bg-primary" : "hidden"
-                              )}
-                            />
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
