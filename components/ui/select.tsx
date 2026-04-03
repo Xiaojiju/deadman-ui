@@ -122,7 +122,7 @@ function SelectItem({
       )}
       {...props}
     >
-      <span className="pointer-events-none absolute inset-e-2 flex size-4 items-center justify-center">
+      <span className="pointer-events-none absolute end-2 flex size-4 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="pointer-events-none" />
         </SelectPrimitive.ItemIndicator>

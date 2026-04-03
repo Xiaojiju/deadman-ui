@@ -82,3 +82,8 @@ export type LlmChatResponse = {
       }
     | undefined
 }
+
+export type LlmModel = {
+  provider: string
+  model: string
+}

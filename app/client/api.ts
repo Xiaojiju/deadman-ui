@@ -1,5 +1,4 @@
-// app/client/api.ts（客户端专用 fetch 包装）
-import { LlmChatRequest, LlmChatResponse } from "@/app/typing"
+import { LlmChatRequest, LlmChatResponse, LlmModel } from "@/app/typing"
 
 export async function callLlmChat(
   req: LlmChatRequest
@@ -18,4 +17,12 @@ export async function callLlmChat(
   }
 
   return (await res.json()) as LlmChatResponse
+}
+
+export async function getLlmModels(): Promise<LlmModel[]> {
+  const res = await fetch("/api/llm/models")
+  if (!res.ok) {
+    throw new Error(`LLM models request failed: ${res.status}`)
+  }
+  return (await res.json()) as LlmModel[]
 }

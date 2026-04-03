@@ -66,6 +66,8 @@
     "chat": "Chat",
     "placeholdersDescription": "Use “/” to trigger the corresponding behavior when you pick behaviors",
     "enterToSendDescription": "Enter to send",
-    "shiftEnterForNewLineDescription": "Shift+Enter for new line"
+    "shiftEnterForNewLineDescription": "Shift+Enter for new line",
+    "selectModel": "Select Model",
+    "model": "Model"
   }
 }

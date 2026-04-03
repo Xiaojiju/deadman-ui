@@ -66,6 +66,8 @@
     "placeholdersDescription": "当您选择行为时，使用“/”触发对应的行为",
     "enterToSendDescription": "按回车键发送",
     "shiftEnterForNewLineDescription": "Shift+Enter 换行",
-    "attachFile": "附件"
+    "attachFile": "附件",
+    "selectModel": "选择模型",
+    "model": "模型"
   }
 }

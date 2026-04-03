@@ -2,14 +2,11 @@
 
 import * as React from "react"
 import {
+  ArrowUp,
   History,
   MessageSquarePlus,
   Paperclip,
-  SendHorizontal,
   Sparkles,
-  Globe,
-  ImageIcon,
-  Mic,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -24,7 +21,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
@@ -33,8 +29,8 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
-import { callLlmChat, OpenAiCompletionApi } from "@/app/client/api"
-import { LlmChatRequest, LlmMessage } from "@/app/typing"
+import { callLlmChat, getLlmModels } from "@/app/client/api"
+import { LlmChatRequest, LlmModel } from "@/app/typing"
 
 type ChatRole = "user" | "assistant"
 
@@ -95,6 +91,8 @@ export function DashboardChatPanel({
 }: Readonly<{ className?: string }>) {
   const t = useTranslations("Chat")
   const tDefault = useTranslations("Default")
+  const [models, setModels] = React.useState<LlmModel[]>([])
+  const [selectedModel, setSelectedModel] = React.useState<string>("")
   const [sessions, setSessions] = React.useState<ChatSession[]>(initialSessions)
   const [activeSessionId, setActiveSessionId] = React.useState(
     initialSessions[0]!.id
@@ -127,6 +125,15 @@ export function DashboardChatPanel({
     if (!el) return
     el.scrollTop = el.scrollHeight
   }, [messages, activeSessionId])
+
+  React.useEffect(() => {
+    const fetchModels = async () => {
+      const models = await getLlmModels()
+      console.log("models", models)
+      setModels(models)
+    }
+    void fetchModels()
+  }, [])
 
   /**
    * @description 处理新会话
@@ -194,6 +201,10 @@ export function DashboardChatPanel({
       e.preventDefault()
       send()
     }
+  }
+
+  const onModelChange = (model: string) => {
+    setSelectedModel(model)
   }
 
   return (
@@ -290,34 +301,37 @@ export function DashboardChatPanel({
       </div>
 
       <div className="shrink-0 border-t p-3">
-        <div className="mb-2 flex flex-wrap items-center gap-1">
-          <span className="me-1 text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
-            {t("tools")}
-          </span>
-          <ToolbarIconButton label={t("attachFile")} icon={Paperclip} />
-          <ToolbarIconButton label={t("webSearch")} icon={Globe} />
-          <ToolbarIconButton label={t("image")} icon={ImageIcon} />
-          <ToolbarIconButton label={t("voice")} icon={Mic} />
-          <Separator orientation="vertical" className="mx-1 h-6" />
-          <span className="text-[10px] text-muted-foreground">
-            {t("placeholders")} — {t("placeholdersDescription")}
-          </span>
+        <div className="flex flex-col gap-2">
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Message…"
+            rows={6}
+            className="h-32 w-full resize-none"
+          />
+          <div className="flex items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2">
+              <ToolbarIconButton label={t("attachFile")} icon={Paperclip} />
+              <LlmModelSelect
+                models={models}
+                value={selectedModel}
+                onChange={onModelChange}
+                placeholder={t("selectModel")}
+              />
+            </div>
+            <Button
+              type="button"
+              size="icon-sm"
+              className="h-8 w-8 rounded-full"
+              onClick={send}
+              aria-label={t("send")}
+            >
+              <ArrowUp className="size-4" />
+            </Button>
+          </div>
         </div>
-        <Textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="Message…"
-          rows={6}
-          className="h-32 resize-none"
-        />
-        <div className="mt-2 flex justify-end">
-          <Button type="button" size="sm" className="gap-1.5" onClick={send}>
-            {t("send")}
-            <SendHorizontal className="size-3.5" />
-          </Button>
-        </div>
-        <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+        <p className="mt-2 text-right text-[10px] text-muted-foreground">
           {t("enterToSend")} · {t("shiftEnterForNewLine")}
         </p>
       </div>
@@ -341,5 +355,51 @@ function ToolbarIconButton({
       </TooltipTrigger>
       <TooltipContent side="top">{label}</TooltipContent>
     </Tooltip>
+  )
+}
+
+function LlmModelSelect({
+  models,
+  value,
+  onChange,
+  placeholder,
+}: Readonly<{
+  models: LlmModel[]
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+}>) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 min-w-28 justify-between px-2 text-[11px]"
+        >
+          <span className="truncate">{value || placeholder}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-44">
+        <DropdownMenuLabel className="text-xs">Models</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
+          {models.map((m) => (
+            <DropdownMenuRadioItem
+              key={`${m.provider}:${m.model}`}
+              value={m.model}
+            >
+              <span className="flex flex-col">
+                <span className="truncate text-xs font-medium">{m.model}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {m.provider}
+                </span>
+              </span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

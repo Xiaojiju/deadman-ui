@@ -7,8 +7,6 @@ export interface Provider {
 
 /**
  * 从环境变量 PROVIDERS 读取 Provider 配置（JSON 数组）
- * 例如：
- * PROVIDERS=[{"name":"alibaba","base_url":"https://dashscope.aliyuncs.com/compatible-mode/v1","api_key":"sk-xxx","models":["bailian/kimi-k2.5"]}]
  */
 function loadProvidersFromEnv(): Provider[] {
   const raw = process.env.PROVIDERS

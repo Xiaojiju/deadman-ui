@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
 
 import { providerStore } from "@/app/server/provider"
@@ -10,34 +10,30 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as LlmChatRequest
   } catch {
-    return new Response(
-      JSON.stringify({
-        error: { code: "BAD_REQUEST", message: "Invalid JSON" },
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+    return NextResponse.json(
+      { error: { code: "BAD_REQUEST", message: "Invalid JSON" } },
+      { status: 400 }
     )
   }
 
   const model = body.model
   if (!model) {
-    return new Response(
-      JSON.stringify({
-        error: { code: "BAD_REQUEST", message: "model is required" },
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+    return NextResponse.json(
+      { error: { code: "BAD_REQUEST", message: "model is required" } },
+      { status: 400 }
     )
   }
 
   const provider = providerStore.getProviderByModel(model)
   if (!provider) {
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         error: {
           code: "PROVIDER_NOT_FOUND",
           message: `No provider for model ${model}`,
         },
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      },
+      { status: 400 }
     )
   }
 
@@ -55,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   const choice = completion.choices[0]
   const content =
-    typeof choice.message.content === "string" ? choice.message.content : "" // 多模态时你再扩展
+    typeof choice.message.content === "string" ? choice.message.content : ""
 
   const resp: LlmChatResponse = {
     id: completion.id,
@@ -74,8 +70,5 @@ export async function POST(req: NextRequest) {
       : undefined,
   }
 
-  return new Response(JSON.stringify(resp), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  })
+  return NextResponse.json(resp, { status: 200 })
 }
