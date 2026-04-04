@@ -38,6 +38,25 @@ export type LlmChatRequest = {
    */
   messages: LlmMessage[]
   /**
+   * 会话ID（用于服务端做上下文压缩/记忆）
+   * 前端建议传当前会话/对话的唯一ID
+   */
+  sessionId?: string
+  /**
+   * 对话模式（用于选择不同系统提示词后缀）
+   */
+  mode?: "chat" | "code" | "explain" | "analyze"
+  /**
+   * 是否启用更激进的上下文压缩（节省 token）
+   */
+  compact?: boolean
+  /**
+   * 可选：用户偏好/长期记忆（最小可用版先走纯文本）
+   */
+  memory?: {
+    userProfile?: string
+  }
+  /**
    * 是否流式输出
    * 是否流式输出，默认false
    */

@@ -31,7 +31,17 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
-import { callLlmChat, callLlmChatStream, getLlmModels } from "@/app/client/api"
+import {
+  appendChatMessage,
+  createChatSession,
+  getChatSession,
+  getLlmModels,
+  listChatSessions,
+  callLlmChat,
+  callLlmChatStream,
+  finalizeSessionTitle,
+  previewSessionTitle,
+} from "@/app/client/api"
 import { LlmChatRequest, LlmModel } from "@/app/typing"
 
 type ChatRole = "user" | "assistant"
@@ -47,42 +57,7 @@ type ChatSession = {
   title: string
 }
 
-const initialSessions: ChatSession[] = [
-  { id: "s1", title: "Dashboard walkthrough" },
-  { id: "s2", title: "API error troubleshooting" },
-]
-
 const EMPTY_MESSAGES: ChatMessage[] = []
-
-const seedMessages: Record<string, ChatMessage[]> = {
-  s1: [
-    {
-      id: "m1",
-      role: "assistant",
-      content:
-        "Hi — I can help you explore this dashboard. Ask about navigation, settings, or data tables.",
-    },
-  ],
-  s2: [
-    {
-      id: "m2",
-      role: "assistant",
-      content:
-        "I see you were debugging an API issue. Paste the response body or status code when you are ready.",
-    },
-    {
-      id: "m3",
-      role: "user",
-      content: "Getting 429 after a few requests — any ideas?",
-    },
-    {
-      id: "m4",
-      role: "assistant",
-      content:
-        "That usually means rate limiting. Check your provider dashboard for quotas, add backoff retries, or cache read-heavy calls.",
-    },
-  ],
-}
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -96,13 +71,11 @@ export function DashboardChatPanel({
   const [models, setModels] = React.useState<LlmModel[]>([])
   const [selectedModel, setSelectedModel] = React.useState<string>("")
   const [streamMode, setStreamMode] = React.useState<boolean>(true)
-  const [sessions, setSessions] = React.useState<ChatSession[]>(initialSessions)
-  const [activeSessionId, setActiveSessionId] = React.useState(
-    initialSessions[0]!.id
-  )
+  const [sessions, setSessions] = React.useState<ChatSession[]>([])
+  const [activeSessionId, setActiveSessionId] = React.useState<string>("")
   const [messagesBySession, setMessagesBySession] = React.useState<
     Record<string, ChatMessage[]>
-  >(() => ({ ...seedMessages }))
+  >(() => ({}))
   const [draft, setDraft] = React.useState("")
   /**
    * @description 获取当前会话
@@ -138,24 +111,59 @@ export function DashboardChatPanel({
     void fetchModels()
   }, [])
 
+  // 初始化：拉取服务端会话列表；若没有则创建一个新会话
+  React.useEffect(() => {
+    const init = async () => {
+      const list = await listChatSessions()
+      if (list.length === 0) {
+        const created = await createChatSession({ title: "New chat" })
+        setSessions([{ id: created.id, title: created.title }])
+        setActiveSessionId(created.id)
+        setMessagesBySession({ [created.id]: [] })
+        return
+      }
+
+      const mapped = list.map((s) => ({ id: s.id, title: s.title }))
+      setSessions(mapped)
+      setActiveSessionId(mapped[0]!.id)
+    }
+    void init()
+  }, [])
+
+  // 切换会话：从服务端拉取当前会话消息
+  React.useEffect(() => {
+    if (!activeSessionId) return
+    const load = async () => {
+      const data = await getChatSession(activeSessionId)
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId ? { ...s, title: data.session.title } : s
+        )
+      )
+      setMessagesBySession((prev) => ({
+        ...prev,
+        [activeSessionId]: data.messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+        })),
+      }))
+    }
+    void load()
+  }, [activeSessionId])
+
   /**
    * @description 处理新会话
    */
   const handleNewChat = React.useCallback(() => {
-    const id = newId()
-    const session: ChatSession = { id, title: "New chat" }
-    setSessions((prev) => [session, ...prev])
-    setActiveSessionId(id)
-    setMessagesBySession((prev) => ({
-      ...prev,
-      [id]: [
-        {
-          id: newId(),
-          role: "assistant",
-          content: "New conversation started. What would you like to work on?",
-        },
-      ],
-    }))
+    const run = async () => {
+      const created = await createChatSession({ title: "New chat" })
+      const session: ChatSession = { id: created.id, title: created.title }
+      setSessions((prev) => [session, ...prev])
+      setActiveSessionId(created.id)
+      setMessagesBySession((prev) => ({ ...prev, [created.id]: [] }))
+    }
+    void run()
   }, [])
 
   const send = React.useCallback(async () => {
@@ -164,12 +172,17 @@ export function DashboardChatPanel({
 
     const model = selectedModel || models[0]?.model
     if (!model) return
+    if (!activeSessionId) return
 
     const userMsg: ChatMessage = {
       id: newId(),
       role: "user",
       content: text,
     }
+
+    const isFirstUserMessage = messages.length === 0
+    const shouldRenameTitle =
+      isFirstUserMessage && activeSession?.title === "New chat"
 
     // 1. 先乐观更新本地消息
     setMessagesBySession((prev) => ({
@@ -178,13 +191,48 @@ export function DashboardChatPanel({
     }))
     setDraft("")
 
+    if (shouldRenameTitle) {
+      const preview = previewSessionTitle(text)
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId ? { ...s, title: preview } : s
+        )
+      )
+      const sid = activeSessionId
+      void finalizeSessionTitle({
+        sessionId: sid,
+        text,
+        model,
+      })
+        .then(({ title }) => {
+          setSessions((prev) =>
+            prev.map((s) => (s.id === sid ? { ...s, title } : s))
+          )
+        })
+        .catch((e) => console.error(e))
+    }
+
+    const conversation = [...messages, userMsg].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }))
+
     const baseReq: LlmChatRequest = {
       model,
-      messages: [{ role: "user", content: text }],
+      sessionId: activeSessionId,
+      mode: "chat",
+      messages: conversation,
     }
 
     // 2. 调用服务端 LLM API
     try {
+      // 将用户消息写入服务端（持久化）
+      void appendChatMessage({
+        sessionId: activeSessionId,
+        role: "user",
+        content: text,
+      })
+
       if (!streamMode) {
         const resp = await callLlmChat({ ...baseReq, stream: false })
         const assistantMsg: ChatMessage = {
@@ -199,8 +247,15 @@ export function DashboardChatPanel({
           ...prev,
           [activeSessionId]: [...(prev[activeSessionId] ?? []), assistantMsg],
         }))
+        void appendChatMessage({
+          sessionId: activeSessionId,
+          role: "assistant",
+          content: assistantMsg.content,
+        })
       } else {
         const assistantId = newId()
+        // 流式内容：必须在回调里累积；不能依赖 await 后的 React state（异步更新，读不到完整回复）
+        let streamedAssistant = ""
         // 先插入一个空的 assistant 消息，占位用于流式更新
         setMessagesBySession((prev) => ({
           ...prev,
@@ -215,6 +270,7 @@ export function DashboardChatPanel({
         }))
 
         await callLlmChatStream({ ...baseReq, stream: true }, (chunk) => {
+          streamedAssistant += chunk
           setMessagesBySession((prev) => {
             const current = prev[activeSessionId] ?? []
             return {
@@ -225,17 +281,34 @@ export function DashboardChatPanel({
             }
           })
         })
+
+        if (streamedAssistant.length > 0) {
+          void appendChatMessage({
+            sessionId: activeSessionId,
+            role: "assistant",
+            content: streamedAssistant,
+          })
+        }
       }
     } catch (e) {
       console.error(e)
     }
-  }, [draft, activeSessionId, models, selectedModel, streamMode])
+  }, [
+    draft,
+    activeSessionId,
+    models,
+    selectedModel,
+    streamMode,
+    messages,
+    activeSession?.title,
+  ])
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      send()
-    }
+    if (e.key !== "Enter" || e.shiftKey) return
+    // 中文等 IME：回车常用于确认候选词/上屏，不应触发发送
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
+    e.preventDefault()
+    send()
   }
 
   const onModelChange = (model: string) => {
@@ -423,16 +496,20 @@ function ChatMessageContent({ content }: { content: string }) {
           <ol className="mb-1.5 ml-4 list-decimal space-y-0.5">{children}</ol>
         ),
         li: ({ children }) => <li>{children}</li>,
-        code: ({ inline, children }) =>
-          inline ? (
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.8em]">
-              {children}
-            </code>
-          ) : (
+        code: ({ children, className }) => {
+          const text = String(children ?? "")
+          const isBlock =
+            /\n/.test(text) || Boolean(className?.includes("language-"))
+          return isBlock ? (
             <code className="block rounded-md bg-background/90 p-2 font-mono text-xs whitespace-pre-wrap shadow-inner ring-1 ring-border">
               {children}
             </code>
-          ),
+          ) : (
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.8em]">
+              {children}
+            </code>
+          )
+        },
       }}
     >
       {content}
