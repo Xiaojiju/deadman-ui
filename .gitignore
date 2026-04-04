@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+.pnpm-store/
 /.pnp
 .pnp.*
 .yarn/*
@@ -28,8 +29,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# env files
+# env files — never commit secrets; create `.env.local` locally (see README)
 .env*.local
+.env.local
 
 # typescript
 *.tsbuildinfo
