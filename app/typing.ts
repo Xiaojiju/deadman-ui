@@ -25,6 +25,8 @@ export type LlmMessage = {
 
 /**
  * 大模型对话请求体
+ * 符合openai多模态消息格式
+ * https://platform.openai.com/docs/guides/text-generation/multimodal-chat-completions
  */
 export type LlmChatRequest = {
   /**
@@ -45,7 +47,7 @@ export type LlmChatRequest = {
   /**
    * 对话模式（用于选择不同系统提示词后缀）
    */
-  mode?: "chat" | "code" | "explain" | "analyze"
+  mode?: "chat" | "code" | "explain" | "analyze" | "write" | "translate"
   /**
    * 是否启用更激进的上下文压缩（节省 token）
    */
@@ -88,21 +90,57 @@ export type LlmChatRequest = {
   responseFormat?: "text" | "json"
 }
 
+/**
+ * 大模型对话响应体
+ * 符合openai多模态消息格式
+ * https://platform.openai.com/docs/guides/text-generation/multimodal-chat-completions
+ */
 export type LlmChatResponse = {
+  /**
+   * 响应ID
+   */
   id: string
+  /**
+   * 创建时间
+   */
   createdAt: number
+  /**
+   * 模型名称
+   */
   model: string
+  /**
+   * 消息
+   */
   message: LlmMessage
+  /**
+   * 使用情况
+   * 使用情况，用于记录大模型的使用情况
+   */
   usage?:
     | {
+        /**
+         * 输入token数
+         */
         inputTokens: number
+        /**
+         * 输出token数
+         */
         outputTokens: number
         totalTokens: number
       }
     | undefined
 }
 
+/**
+ * 大模型列表
+ */
 export type LlmModel = {
+  /**
+   * 提供商
+   */
   provider: string
+  /**
+   * 模型名称
+   */
   model: string
 }

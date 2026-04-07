@@ -2,7 +2,9 @@
 
 **[中文说明](README.zh.md)**
 
-A **Next.js (App Router)** dashboard and chat UI: multi-model chat against **OpenAI-compatible APIs**, file-based session persistence, streaming responses, and server-side context compression hooks.
+## About
+
+**deadman-ui** is a **Next.js** dashboard with a built-in **AI assistant**: connect **OpenAI-compatible** endpoints via env, **switch models** on the fly, and get **streaming** answers. **Sessions** persist as local files with **smart titles** (short text or LLM summary). The server applies **unified system prompts**, optional **per-session memory**, and **context compression** when input grows—so you get a usable chat product locally without wiring a separate backend first.
 
 ---
 

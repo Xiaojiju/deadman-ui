@@ -68,6 +68,16 @@
     "shiftEnterForNewLineDescription": "Shift+Enter 换行",
     "attachFile": "附件",
     "selectModel": "选择模型",
-    "model": "模型"
+    "models": "模型",
+    "mode": "模式",
+    "selectMode": "选择模式",
+    "modes": {
+      "writing": "帮我写作",
+      "writingDescription": "更偏向写作/润色/改写/结构优化：我会先确认受众、语气与格式，再给出可直接使用的成稿或多个版本。",
+      "dataAnalysis": "数据分析",
+      "dataAnalysisDescription": "更偏向分析与方案：我会先给结论，再列出关键依据；对不确定点会明确假设，必要时给出计算或表格化结果。",
+      "translation": "翻译",
+      "translationDescription": "更偏向翻译与表达一致性：默认忠实准确翻译，并保留语气与术语；遇到歧义会给出备选译法与推荐。"
+    }
   }
 }

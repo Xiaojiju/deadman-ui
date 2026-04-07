@@ -68,6 +68,16 @@
     "enterToSendDescription": "Enter to send",
     "shiftEnterForNewLineDescription": "Shift+Enter for new line",
     "selectModel": "Select Model",
-    "model": "Model"
+    "models": "Models",
+    "mode": "Mode",
+    "selectMode": "Select Mode",
+    "modes": {
+      "writing": "Writing",
+      "writingDescription": "Writing-focused responses: drafting, rewriting, polishing, and structuring with clear tone and format.",
+      "dataAnalysis": "Data Analysis",
+      "dataAnalysisDescription": "Analysis-focused responses: conclusions first, key evidence and assumptions clearly stated; includes calculations/tables when helpful.",
+      "translation": "Translation",
+      "translationDescription": "Translation-focused responses: accurate, consistent tone and terminology; provides alternatives when ambiguity exists."
+    }
   }
 }

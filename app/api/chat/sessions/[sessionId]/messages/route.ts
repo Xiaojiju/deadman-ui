@@ -7,9 +7,9 @@ export async function POST(
 ) {
   const { sessionId } = await ctx.params
 
-  let body: any
+  let body: { role: string; content: string }
   try {
-    body = await req.json()
+    body = (await req.json()) as { role: string; content: string }
   } catch {
     return NextResponse.json(
       { error: { code: "BAD_REQUEST", message: "Invalid JSON" } },
@@ -19,7 +19,10 @@ export async function POST(
 
   const role = body?.role
   const content = body?.content
-  if ((role !== "user" && role !== "assistant") || typeof content !== "string") {
+  if (
+    (role !== "user" && role !== "assistant") ||
+    typeof content !== "string"
+  ) {
     return NextResponse.json(
       { error: { code: "BAD_REQUEST", message: "role/content is required" } },
       { status: 400 }
@@ -29,4 +32,3 @@ export async function POST(
   const msg = await appendMessage({ sessionId, role, content })
   return NextResponse.json(msg, { status: 201 })
 }
-

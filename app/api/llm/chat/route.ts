@@ -6,12 +6,15 @@ import {
   updateSessionContextMemory,
 } from "@/app/server/chat-store"
 import { providerStore } from "@/app/server/provider"
+import type { ContentPart, LlmMessage } from "@/app/typing"
 import { LlmChatRequest, LlmChatResponse } from "@/app/typing"
 import {
   SYSTEM_PROMPT,
   CODE_MODE_SUFFIX,
   EXPLAIN_MODE_SUFFIX,
   ANALYZE_MODE_SUFFIX,
+  TRANSLATE_MODE_SUFFIX,
+  WRITE_MODE_SUFFIX,
 } from "@/app/server/prompt"
 import { ChatCompletionMessageParam } from "openai/resources"
 
@@ -31,7 +34,9 @@ type SessionMemory = {
 // MVP：内存级会话记忆（进程重启会丢，适合先验证效果）
 const sessionMemoryStore = new Map<string, SessionMemory>()
 
-function buildSystemPrompt(mode?: "chat" | "code" | "explain" | "analyze") {
+function buildSystemPrompt(
+  mode?: "chat" | "code" | "explain" | "analyze" | "write" | "translate"
+) {
   switch (mode) {
     case "code":
       return SYSTEM_PROMPT + CODE_MODE_SUFFIX
@@ -39,6 +44,10 @@ function buildSystemPrompt(mode?: "chat" | "code" | "explain" | "analyze") {
       return SYSTEM_PROMPT + EXPLAIN_MODE_SUFFIX
     case "analyze":
       return SYSTEM_PROMPT + ANALYZE_MODE_SUFFIX
+    case "write":
+      return SYSTEM_PROMPT + WRITE_MODE_SUFFIX
+    case "translate":
+      return SYSTEM_PROMPT + TRANSLATE_MODE_SUFFIX
     case "chat":
     default:
       return SYSTEM_PROMPT
@@ -50,19 +59,46 @@ const MAX_SUMMARY_CHARS = 1200
 /** 估算「系统提示 + 摘要 + 最近窗口」总字符超限时才触发 LLM 压缩，避免每条消息都总结 */
 const MAX_CONTEXT_CHARS_BEFORE_COMPRESS = 12000
 
-function toChatMessages(raw: unknown): ChatCompletionMessageParam[] {
-  if (!Array.isArray(raw)) return []
+function toChatMessages(raw: LlmMessage[]): ChatCompletionMessageParam[] {
   const out: ChatCompletionMessageParam[] = []
-  for (const m of raw) {
-    if (!m || typeof m !== "object") continue
-    const mm = m as Record<string, unknown>
-    const role = mm.role
-    const content = mm.content
-    if (role !== "system" && role !== "user" && role !== "assistant") continue
-    // 目前仅支持 string 内容；多模态数组在这里先忽略（避免压缩逻辑复杂化）
-    if (typeof content !== "string") continue
-    out.push({ role, content })
+
+  const push = (msg: ChatCompletionMessageParam) => out.push(msg)
+
+  const normalizeParts = (parts: ContentPart[]) => {
+    const normalized: ContentPart[] = []
+    for (const p of parts) {
+      if (p.type === "text") {
+        const text = p.text?.trim()
+        if (text) normalized.push({ type: "text", text })
+      } else if (p.type === "image_url") {
+        const url = p.image_url?.url?.trim()
+        if (url) normalized.push({ type: "image_url", image_url: { url } })
+      }
+    }
+    return normalized
   }
+
+  for (const m of raw) {
+    const role = m.role
+    const content = m.content
+
+    if (typeof content === "string") {
+      const text = content.trim()
+      if (text) push({ role, content: text })
+      continue
+    }
+
+    if (Array.isArray(content)) {
+      const parts = normalizeParts(content)
+      if (parts.length > 0) {
+        push({ role, content: parts } as unknown as ChatCompletionMessageParam)
+      }
+      continue
+    }
+
+    // null/empty: ignore
+  }
+
   return out
 }
 
@@ -98,7 +134,7 @@ async function loadPersistedMemory(sessionKey: string): Promise<SessionMemory> {
 
 function shouldCompressContext(params: {
   body: LlmChatRequest
-  mode?: "chat" | "code" | "explain" | "analyze"
+  mode?: "chat" | "code" | "explain" | "analyze" | "write" | "translate"
   memory: SessionMemory
   fullMessages: ChatCompletionMessageParam[]
 }): boolean {
@@ -186,7 +222,7 @@ async function updateSessionSummary(params: {
 
 function buildModelMessages(params: {
   body: LlmChatRequest
-  mode?: "chat" | "code" | "explain" | "analyze"
+  mode?: "chat" | "code" | "explain" | "analyze" | "write" | "translate"
   memory?: SessionMemory
   incoming: ChatCompletionMessageParam[]
 }) {
@@ -235,7 +271,14 @@ async function handleStreamChat(params: {
   body: LlmChatRequest
 }) {
   const { client, model, body } = params
-  const mode = body.mode as "chat" | "code" | "explain" | "analyze" | undefined
+  const mode = body.mode as
+    | "chat"
+    | "code"
+    | "explain"
+    | "analyze"
+    | "write"
+    | "translate"
+    | undefined
   const sessionKey = buildSessionKey(body)
   const incoming = toChatMessages(body.messages)
   const existing = await loadPersistedMemory(sessionKey)
@@ -307,7 +350,14 @@ async function handleNonStreamChat(params: {
 }) {
   const { client, model, body } = params
 
-  const mode = body.mode as "chat" | "code" | "explain" | "analyze" | undefined
+  const mode = body.mode as
+    | "chat"
+    | "code"
+    | "explain"
+    | "analyze"
+    | "write"
+    | "translate"
+    | undefined
   const sessionKey = buildSessionKey(body)
   const incoming = toChatMessages(body.messages)
   const existing = await loadPersistedMemory(sessionKey)

@@ -1,0 +1,22 @@
+{
+  "session": {
+    "id": "1775546652490-r1h0l7d3",
+    "title": "童心未泯，怎么翻译",
+    "createdAt": 1775546652490,
+    "updatedAt": 1775546681149
+  },
+  "messages": [
+    {
+      "id": "1775546667368-kwa6gdl4",
+      "role": "user",
+      "content": "童心未泯，怎么翻译",
+      "createdAt": 1775546667368
+    },
+    {
+      "id": "1775546681149-3jbi3mwc",
+      "role": "assistant",
+      "content": "**直译**：childlike innocence / youthful heart\n\n**更地道的表达**：\n- **young at heart**（最常用，强调心态年轻）\n- **retain a childlike sense of wonder**\n- **never lose one's inner child**\n\n**语境选择**：\n- 日常口语 → **young at heart**\n- 文学/赞美 → **childlike innocence remains**\n- 强调好奇心 → **keep the wonder of a child**",
+      "createdAt": 1775546681149
+    }
+  ]
+}
